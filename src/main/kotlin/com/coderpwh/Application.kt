@@ -1,5 +1,6 @@
 package com.coderpwh
 
+import com.coderpwh.plugins.configureSerialzation
 import io.ktor.server.application.*
 
 fun main(args: Array<String>) {
@@ -7,4 +8,5 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
+    configureSerialzation()
 }
