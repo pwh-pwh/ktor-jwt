@@ -7,6 +7,8 @@ import com.coderpwh.routing.response.UserResponse
 import com.coderpwh.service.UserService
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -25,16 +27,29 @@ fun Route.userRoute(userService: UserService) {
         call.respond(message = HttpStatusCode.OK)
     }
 
-    get {
-        val users = userService.findAll()
-        call.respond(message = users.map(User::toResponse))
+    authenticate {
+        get {
+            val users = userService.findAll()
+            call.respond(message = users.map(User::toResponse))
+        }
     }
 
-    get("/{id}") {
-        val id:String = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-        val findById = userService.findById(id) ?: return@get call.respond(HttpStatusCode.NotFound)
-        call.respond(message = findById.toResponse())
+
+    authenticate("another") {
+        get("/{id}") {
+            val id:String = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+            val findById = userService.findById(id) ?: return@get call.respond(HttpStatusCode.NotFound)
+            if(findById.username != extractPrincipalUserName(call))
+                return@get call.respond(HttpStatusCode.NotFound)
+            call.respond(message = findById.toResponse())
+        }
     }
+
+
+}
+
+private fun extractPrincipalUserName(call: ApplicationCall): String? {
+    return call.principal<JWTPrincipal>()?.payload?.getClaim("username")?.asString()
 }
 
 private fun User.toResponse(): UserResponse {
