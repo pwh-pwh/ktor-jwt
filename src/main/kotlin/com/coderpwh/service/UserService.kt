@@ -17,8 +17,10 @@ class UserService(
     fun save(user: User): User? {
         val foundUser = findByUserName(user.username)
         return foundUser?.let {
-            userRepository.save(it)
+            null
+        } ?: run {
+            userRepository.save(user)
             user
-        } ?: null
+        }
     }
 }
