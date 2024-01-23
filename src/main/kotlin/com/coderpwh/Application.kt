@@ -2,6 +2,7 @@ package com.coderpwh
 
 import com.coderpwh.plugins.configureSecurity
 import com.coderpwh.plugins.configureSerialzation
+import com.coderpwh.repository.RefreshTokenRepository
 import com.coderpwh.repository.UserRepository
 import com.coderpwh.routing.configureRouting
 import com.coderpwh.service.JwtService
@@ -13,9 +14,11 @@ fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    val userService = UserService(UserRepository())
-    val jwtService= JwtService(this,userService)
+    val userRepository = UserRepository()
+    val refreshTokenRepository = RefreshTokenRepository()
+    val jwtService= JwtService(this,userRepository)
+    val userService = UserService(userRepository,jwtService, refreshTokenRepository)
     configureSerialzation()
     configureSecurity(jwtService)
-    configureRouting(userService,jwtService)
+    configureRouting(userService)
 }

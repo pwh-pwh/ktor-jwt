@@ -6,12 +6,11 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
 fun Application.configureRouting(
-    userService: UserService,
-    jwtService: JwtService
+    userService: UserService
 ) {
     routing {
         route("/api/auth") {
-            authRoute(jwtService)
+            authRoute(userService)
         }
 
         route("/api/user") {

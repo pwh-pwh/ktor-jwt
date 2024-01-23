@@ -3,6 +3,7 @@ package com.coderpwh.service
 import com.auth0.jwt.JWT
 import com.auth0.jwt.JWTVerifier
 import com.auth0.jwt.algorithms.Algorithm
+import com.coderpwh.repository.UserRepository
 import com.coderpwh.routing.request.LoginRequest
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -11,7 +12,7 @@ import java.util.Date
 
 class JwtService(
     val application: Application,
-    val userService: UserService
+    val userRepository: UserRepository
 ) {
 
     private val secret = getConfigProperty("jwt.secret")
@@ -25,30 +26,31 @@ class JwtService(
         .withAudience(audience)
         .build()
 
-    fun createToken(loginRequest: LoginRequest): String? {
-        var findByUserName = userService.findByUserName(loginRequest.username)
-        return if (findByUserName != null && findByUserName.password == loginRequest.password) {
+    fun createAccessToken(username:String) = createToken(username,36_0000)
+
+    fun createRefreshToken(username:String) = createToken(username,24 * 60 * 60)
+
+    private fun createToken(username:String,expireIn:Int): String =
             JWT
                 .create()
                 .withAudience(audience)
                 .withIssuer(issure)
-                .withClaim("username", findByUserName.username)
-                .withExpiresAt(Date(System.currentTimeMillis() + 3600000))
+                .withClaim("username", username)
+                .withExpiresAt(Date(System.currentTimeMillis() + expireIn))
                 .sign(Algorithm.HMAC256(secret))
-        } else {
-            null
-        }
-    }
+
 
     fun customValidator(credential: JWTCredential):JWTPrincipal? {
         var extractUserName = extractUserName(credential)
-        val foundUser = extractUserName?.let(userService::findByUserName)
+        val foundUser = extractUserName?.let(userRepository::findByName)
         return foundUser?.let {
             if (audienceMatches(credential)) {
                 JWTPrincipal(credential.payload)
             } else null
         }
     }
+
+    fun audienceMatches(audience:String) = audience == this.audience
 
 
     private fun audienceMatches(credential: JWTCredential) = credential.payload.audience.contains(audience)
