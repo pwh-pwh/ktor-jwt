@@ -14,7 +14,8 @@ data class UserRequest(
         return User(
             username=this.username,
             password = this.password,
-            id = UUID.randomUUID()
+            id = UUID.randomUUID(),
+            role = "USER"
         )
     }
 }

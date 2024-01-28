@@ -5,6 +5,7 @@ import com.coderpwh.repository.UserRepository
 import com.coderpwh.routing.request.UserRequest
 import com.coderpwh.routing.response.UserResponse
 import com.coderpwh.service.UserService
+import com.coderpwh.util.authorized
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -28,20 +29,24 @@ fun Route.userRoute(userService: UserService) {
     }
 
     authenticate {
-        get {
-            val users = userService.findAll()
-            call.respond(message = users.map(User::toResponse))
+        authorized("ADMIN" ) {
+            get {
+                val users = userService.findAll()
+                call.respond(message = users.map(User::toResponse))
+            }
         }
     }
 
 
     authenticate("another") {
-        get("/{id}") {
-            val id:String = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-            val findById = userService.findById(id) ?: return@get call.respond(HttpStatusCode.NotFound)
-            if(findById.username != extractPrincipalUserName(call))
-                return@get call.respond(HttpStatusCode.NotFound)
-            call.respond(message = findById.toResponse())
+        authorized("ADMIN", "USER") {
+            get("/{id}") {
+                val id:String = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
+                val findById = userService.findById(id) ?: return@get call.respond(HttpStatusCode.NotFound)
+                if(findById.username != extractPrincipalUserName(call))
+                    return@get call.respond(HttpStatusCode.NotFound)
+                call.respond(message = findById.toResponse())
+            }
         }
     }
 

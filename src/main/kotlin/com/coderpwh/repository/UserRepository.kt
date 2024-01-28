@@ -4,7 +4,9 @@ import com.coderpwh.model.User
 import java.util.UUID
 
 class UserRepository {
-    private val users = mutableListOf<User>();
+    private val users = mutableListOf<User>(
+        User(UUID.randomUUID(), "admin", "123456", "ADMIN"),
+    );
 
     fun findAll() = users
 
